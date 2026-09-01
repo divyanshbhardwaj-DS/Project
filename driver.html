@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SARTHI Driver App - Accept Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root{--indigo:#1B3A63;--indigo-dk:#0F2140;--teal:#0B4F4A;--amber:#FFB347;--amber-lt:#FFF0D6;--green:#2ECC71;--red:#E74C3C;--bg:#F0F4F8;--txt:#1F2937;--muted:#6B7280;--bdr:#E5E7EB;--sh:0 4px 20px rgba(0,0,0,.08);--r:16px}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+    .hidden{display:none!important}
+
+    /* LOGIN */
+    #screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0B1F3A,var(--teal) 100%);padding:20px}
+    .login-card{background:rgba(255,255,255,.97);border-radius:24px;padding:40px;width:100%;max-width:420px;box-shadow:0 32px 64px rgba(0,0,0,.4)}
+    .login-brand{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+    .login-brand-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--teal),var(--indigo));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+    .login-brand h1{font-family:'Poppins',sans-serif;font-size:1.6rem;color:var(--teal)}
+    .login-brand p{font-size:.78rem;color:var(--muted)}
+    .role-badge{display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;color:var(--teal);font-size:.75rem;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:20px;border:1px solid #BBF7D0}
+    .demo-hint{background:#F0FDF4;border-radius:8px;padding:10px 14px;font-size:.73rem;color:var(--teal);margin-bottom:18px}
+    .form-field{margin-bottom:14px}
+    .form-field label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:5px}
+    .form-field input{width:100%;padding:12px 14px;border:1.5px solid var(--bdr);border-radius:10px;font-size:.95rem;font-family:inherit;outline:none;background:#FAFAFA;transition:border-color .2s}
+    .form-field input:focus{border-color:var(--teal);background:#fff}
+    .btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;transition:transform .15s}
+    .btn-login:hover{transform:translateY(-1px)}
+    .err-msg{color:var(--red);font-size:.78rem;margin-top:8px;text-align:center}
+    .switch-link{text-align:center;margin-top:14px;font-size:.8rem;color:var(--muted)}
+    .switch-link a{color:var(--teal);font-weight:600;text-decoration:none}
+
+    /* DRIVER HEADER */
+    #screen-app{min-height:100vh;display:flex;flex-direction:column}
+    .drv-header{background:linear-gradient(135deg,#0B1F3A,var(--teal));color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+    .brand-row{display:flex;align-items:center;gap:12px}
+    .brand-title{font-family:'Poppins',sans-serif;font-size:1.1rem;font-weight:800}
+    .brand-sub{font-size:.7rem;opacity:.75}
+    .online-toggle{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.8rem;font-weight:700;transition:background .2s}
+    .online-toggle.active{background:var(--green);border-color:transparent}
+    .online-toggle.offline-mode{background:rgba(255,255,255,.15)}
+
+    /* EARNINGS BANNER */
+    .earnings-banner{background:linear-gradient(135deg,#1a3a5c,var(--teal));color:#fff;padding:16px 20px;display:flex;justify-content:space-around;align-items:center}
+    .earn-chip{text-align:center}
+    .earn-val{display:block;font-family:'Poppins',sans-serif;font-size:1.25rem;font-weight:800}
+    .earn-lbl{font-size:.65rem;opacity:.7;margin-top:2px}
+    .earn-div{width:1px;height:36px;background:rgba(255,255,255,.2)}
+
+    .app-body{flex:1;padding:16px;max-width:540px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:14px}
+
+    /* OFFLINE BANNER */
+    .offline-banner{background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:600;color:#92400E}
+
+    /* INCOMING REQUEST CARD */
+    .incoming-card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);border:2px solid var(--amber);animation:pulse-bdr 1.5s infinite}
+    @keyframes pulse-bdr{0%,100%{border-color:var(--amber)}50%{border-color:#ff7f00}}
+    .incoming-header{background:linear-gradient(135deg,#92400E,var(--amber));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+    .incoming-header h3{font-family:'Poppins',sans-serif;font-size:.95rem}
+    .incoming-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+    .rider-info-strip{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+    .rider-circle{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--teal));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.95rem}
+    .rider-meta strong{display:block;font-size:.88rem;font-weight:700}
+    .rider-meta span{font-size:.72rem;color:var(--muted)}
+    .route-info-box{background:#F9FAFB;border-radius:10px;padding:12px}
+    .r-row{display:flex;align-items:center;gap:8px;font-size:.82rem;margin-bottom:4px}
+    .r-row:last-child{margin-bottom:0}
+    .r-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .r-dot.from{background:var(--indigo)}
+    .r-dot.to{background:var(--amber)}
+    .req-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .rq-chip{background:#F9FAFB;border:1px solid var(--bdr);border-radius:8px;padding:8px;text-align:center}
+    .rq-val{display:block;font-size:1rem;font-weight:800;color:var(--indigo)}
+    .rq-lbl{font-size:.62rem;color:var(--muted);margin-top:2px}
+    .accept-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-accept{padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--green),#27ae60);color:#fff;font-size:.95rem;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s}
+    .btn-accept:hover{transform:translateY(-1px)}
+    .btn-decline{padding:14px;border:1.5px solid var(--red);border-radius:12px;color:var(--red);background:transparent;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+    .btn-decline:hover{background:#FEE2E2}
+
+    /* ACTIVE TRIP */
+    #panel-active-trip{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+    .trip-header{background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;padding:16px 20px;display:flex;align-items:center;gap:10px}
+    .trip-header h3{font-family:'Poppins',sans-serif;font-size:1rem}
+    .trip-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+    #driver-map{height:200px;border-radius:10px;overflow:hidden}
+    .trip-info-strip{background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:10px;padding:12px 14px}
+    .trip-info-strip strong{display:block;font-size:.9rem;font-weight:700;margin-bottom:2px}
+    .trip-info-strip span{font-size:.75rem;color:var(--muted)}
+    .trip-fare-bar{background:var(--amber-lt);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .trip-fare-bar .label{font-size:.75rem;color:var(--muted);font-weight:600}
+    .trip-fare-bar .amount{font-family:'Poppins',sans-serif;font-size:1.4rem;font-weight:800;color:var(--indigo)}
+    .btn-complete{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--green),#27ae60);color:#fff;font-size:1rem;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s}
+    .btn-complete:hover{transform:translateY(-1px)}
+
+    /* SEAT COUNTER */
+    .seat-card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+    .seat-card h3{font-family:'Poppins',sans-serif;font-size:.9rem;color:var(--indigo);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+    .seat-counter-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .btn-seat{width:44px;height:44px;border:none;border-radius:50%;font-size:1.4rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .1s}
+    .btn-seat:hover{transform:scale(1.1)}
+    .btn-seat.minus{background:#FEE2E2;color:var(--red)}
+    .btn-seat.plus{background:#D1FAE5;color:#065F46}
+    .seat-display{text-align:center;flex:1}
+    .seat-big{font-family:'Poppins',sans-serif;font-size:2.2rem;font-weight:800;color:var(--indigo);line-height:1}
+    .seat-total{font-size:.72rem;color:var(--muted);margin-top:2px}
+    .seat-grid{display:flex;gap:5px;justify-content:center;margin-top:8px}
+    .seat-pip{width:20px;height:20px;border-radius:4px}
+    .seat-pip.occ{background:var(--indigo)}
+    .seat-pip.free{background:#D1FAE5;border:1px solid #BBF7D0}
+
+    /* IDLE STATE */
+    #panel-idle{background:#fff;border-radius:var(--r);padding:28px;box-shadow:var(--sh);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+    .idle-icon{width:64px;height:64px;border-radius:50%;background:var(--amber-lt);display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+    #panel-idle h3{font-family:'Poppins',sans-serif;font-size:1rem;color:var(--indigo)}
+    #panel-idle p{font-size:.8rem;color:var(--muted);max-width:240px}
+    .radar-pulse{width:80px;height:80px;border-radius:50%;border:2px solid var(--amber);animation:rp 1.5s infinite;opacity:.6;margin:8px 0}
+    @keyframes rp{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.4);opacity:0}}
+
+    /* VOICE PILLS */
+    .voice-bar{display:flex;flex-wrap:wrap;gap:6px}
+    .v-pill{font-size:.72rem;font-weight:600;padding:6px 12px;background:#EEF2FF;color:var(--indigo);border:1px solid #C7D2FE;border-radius:999px;cursor:pointer;font-family:inherit;transition:background .15s}
+    .v-pill:hover{background:#C7D2FE}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1F2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:.83rem;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:9999;animation:tIn .3s ease;white-space:nowrap;max-width:90vw}
+    @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-icon">🛺</div>
+      <div>
+        <h1>SARTHI</h1>
+        <p>Driver Partner Portal</p>
+      </div>
+    </div>
+    <div class="role-badge"><i data-lucide="steering-wheel" style="width:13px;height:13px;"></i> Driver Login</div>
+    <div class="demo-hint">
+      <strong>Demo credentials:</strong> Phone: <code>+91 91234 56789</code> &nbsp; PIN: <code>1234</code>
+    </div>
+    <div class="form-field">
+      <label>Phone Number</label>
+      <input type="tel" id="login-phone" placeholder="+91 91234 56789" value="+91 91234 56789">
+    </div>
+    <div class="form-field">
+      <label>PIN / Password</label>
+      <input type="password" id="login-pin" placeholder="4-digit PIN" value="1234">
+    </div>
+    <p class="err-msg hidden" id="login-err">Incorrect credentials. Use demo credentials above.</p>
+    <button class="btn-login" id="btn-driver-login">
+      <i data-lucide="log-in" style="width:16px;height:16px;"></i> Sign In as Driver
+    </button>
+    <p class="switch-link">Are you a rider? <a href="rider.html">Switch to Rider App &rarr;</a></p>
+  </div>
+</div>
+
+<!-- DRIVER DASHBOARD -->
+<div id="screen-app" class="hidden">
+
+  <!-- Header -->
+  <header class="drv-header">
+    <div class="brand-row">
+      <div>
+        <div class="brand-title">🛺 SARTHI Driver</div>
+        <div class="brand-sub" id="drv-greeting">Welcome, Ramesh!</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="online-toggle active" id="btn-online-toggle">
+        <i data-lucide="wifi" style="width:13px;height:13px;"></i>
+        <span id="online-label">Online</span>
+      </button>
+      <div class="user-avatar" id="avatar-btn" title="Logout" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#ff7f00);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.9rem;cursor:pointer;">R</div>
+    </div>
+  </header>
+
+  <!-- Earnings Banner -->
+  <div class="earnings-banner">
+    <div class="earn-chip">
+      <span class="earn-val" id="earn-today">&#8377;520</span>
+      <span class="earn-lbl">Today's Earnings</span>
+    </div>
+    <div class="earn-div"></div>
+    <div class="earn-chip">
+      <span class="earn-val" id="trips-today">18</span>
+      <span class="earn-lbl">Trips Today</span>
+    </div>
+    <div class="earn-div"></div>
+    <div class="earn-chip">
+      <span class="earn-val" id="rating-val">4.9 &#9733;</span>
+      <span class="earn-lbl">Your Rating</span>
+    </div>
+  </div>
+
+  <div class="app-body">
+
+    <!-- Offline banner (shown when driver is offline) -->
+    <div class="offline-banner hidden" id="offline-banner">
+      <i data-lucide="wifi-off" style="width:18px;height:18px;flex-shrink:0;"></i>
+      You are currently <strong>OFFLINE</strong>. Toggle Online to receive ride requests.
+    </div>
+
+    <!-- Seat Counter Card (always visible when online) -->
+    <div class="seat-card" id="seat-card">
+      <h3>
+        <i data-lucide="users" style="width:15px;height:15px;"></i>
+        Live Seat Availability Broadcast
+      </h3>
+      <div class="seat-counter-row">
+        <button class="btn-seat minus" id="btn-minus"><i data-lucide="minus" style="width:18px;height:18px;"></i></button>
+        <div class="seat-display">
+          <div class="seat-big" id="seat-count">4</div>
+          <div class="seat-total">/ 6 Seats Free</div>
+          <div class="seat-grid" id="seat-grid"></div>
+        </div>
+        <button class="btn-seat plus" id="btn-plus"><i data-lucide="plus" style="width:18px;height:18px;"></i></button>
+      </div>
+      <div class="voice-bar" style="margin-top:12px;">
+        <button class="v-pill" id="vp1">&#x1F50A; "&#2360;&#2349;&#2368; &#2360;&#2368;&#2335; &#2326;&#2366;&#2354;&#2368;" (All Free)</button>
+        <button class="v-pill" id="vp2">&#x1F50A; "3 &#2360;&#2357;&#2366;&#2352;&#2368; &#2348;&#2376;&#2920; &#2327;&#2312;" (3 Left)</button>
+        <button class="v-pill" id="vp3">&#x1F50A; "&#2327;&#2366;&#2334;&#2364;&#2368; &#2347;&#2369;&#2354; &#2361;&#2376;" (Full)</button>
+      </div>
+    </div>
+
+    <!-- Idle State (waiting for requests) -->
+    <div id="panel-idle">
+      <div class="radar-pulse"></div>
+      <div class="idle-icon">&#x1F4F6;</div>
+      <h3>Waiting for Ride Requests&hellip;</h3>
+      <p>You are online. Nearby passengers can now see and request your rickshaw.</p>
+    </div>
+
+    <!-- Incoming Ride Request -->
+    <div class="incoming-card hidden" id="panel-incoming">
+      <div class="incoming-header">
+        <i data-lucide="bell-ring" style="width:18px;height:18px;flex-shrink:0;"></i>
+        <div>
+          <h3>New Ride Request!</h3>
+          <span style="font-size:.72rem;opacity:.9;">Respond within 30 seconds</span>
+        </div>
+      </div>
+      <div class="incoming-body">
+        <div class="rider-info-strip">
+          <div class="rider-circle" id="req-rider-initial">A</div>
+          <div class="rider-meta">
+            <strong id="req-rider-name">Aarav Sharma</strong>
+            <span id="req-rider-phone">+91 98765 43210</span>
+          </div>
+        </div>
+        <div class="route-info-box">
+          <div class="r-row"><span class="r-dot from"></span><strong id="req-pickup">Vishwavidyalaya Metro Gate 2</strong></div>
+          <div style="width:1px;height:10px;background:var(--bdr);margin-left:5px;"></div>
+          <div class="r-row"><span class="r-dot to"></span><strong id="req-dropoff">Hansraj College Gate 1</strong></div>
+        </div>
+        <div class="req-chips">
+          <div class="rq-chip"><span class="rq-val" id="req-seats">1</span><span class="rq-lbl">Seat(s)</span></div>
+          <div class="rq-chip"><span class="rq-val" id="req-fare">&#8377;11</span><span class="rq-lbl">Fare</span></div>
+          <div class="rq-chip"><span class="rq-val" id="req-dist">650m</span><span class="rq-lbl">Distance</span></div>
+        </div>
+        <!-- Countdown bar -->
+        <div style="background:#F9FAFB;border-radius:8px;padding:8px 12px;">
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:4px;">
+            <span>Auto-decline in</span><span id="countdown-val">30s</span>
+          </div>
+          <div style="background:#E5E7EB;border-radius:4px;height:6px;overflow:hidden;">
+            <div id="countdown-bar" style="height:100%;background:var(--amber);width:100%;transition:width .9s linear;"></div>
+          </div>
+        </div>
+        <div class="accept-actions">
+          <button class="btn-accept" id="btn-accept">
+            <i data-lucide="check" style="width:16px;height:16px;"></i> Accept Ride
+          </button>
+          <button class="btn-decline" id="btn-decline">
+            <i data-lucide="x" style="width:16px;height:16px;"></i> Decline
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Trip -->
+    <div id="panel-active-trip" class="hidden">
+      <div class="trip-header">
+        <i data-lucide="navigation" style="width:18px;height:18px;flex-shrink:0;"></i>
+        <div>
+          <h3>Trip In Progress</h3>
+          <span style="font-size:.72rem;opacity:.8;">Navigate to rider pickup</span>
+        </div>
+      </div>
+      <div class="trip-body">
+        <div id="driver-map"></div>
+        <div class="trip-info-strip">
+          <strong>Pickup: <span id="active-pickup">Vishwavidyalaya Metro Gate 2</span></strong>
+          <span>Drop-off: <span id="active-dropoff">Hansraj College Gate 1</span></span>
+          <span style="margin-top:4px;display:block;">Rider: <span id="active-rider-name">Aarav Sharma</span></span>
+        </div>
+        <div class="trip-fare-bar">
+          <span class="label">Trip Fare</span>
+          <span class="amount" id="active-fare">&#8377;11</span>
+        </div>
+        <button class="btn-complete" id="btn-complete-trip">
+          <i data-lucide="check-circle" style="width:18px;height:18px;"></i> Mark Trip as Completed &amp; Collect Fare
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast-el">
+  <span id="toast-msg-el">Notification</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="js/dispatch_bus.js"></script>
+<script>
+const STOPS = {
+  "Vishwavidyalaya Metro Gate 2": [28.6946, 77.2167],
+  "Arts Faculty Circle":          [28.6895, 77.2105],
+  "Hansraj College Gate 1":       [28.6812, 77.2091],
+  "Patel Chest Institute":        [28.6845, 77.2102],
+  "Kamla Nagar Market":           [28.6798, 77.2024]
+};
+
+const SarthiDriverApp = {
+  isOnline: true,
+  seatsFree: 4,
+  pendingRequest: null,
+  activeTrip: null,
+  map: null,
+  countdownTimer: null,
+
+  init() {
+    document.getElementById('btn-driver-login').onclick = () => this.login();
+    document.getElementById('login-pin').onkeydown = e => { if(e.key==='Enter') this.login(); };
+    document.getElementById('avatar-btn').onclick = () => this.logout();
+    document.getElementById('btn-online-toggle').onclick = () => this.toggleOnline();
+    document.getElementById('btn-minus').onclick = () => this.adjustSeats(-1);
+    document.getElementById('btn-plus').onclick = () => this.adjustSeats(1);
+    document.getElementById('btn-accept').onclick = () => this.acceptRide();
+    document.getElementById('btn-decline').onclick = () => this.declineRide();
+    document.getElementById('btn-complete-trip').onclick = () => this.completeTrip();
+    document.getElementById('vp1').onclick = () => { this.seatsFree = 6; this.renderSeats(); this.toast('"सभी सीट खाली" — All 6 seats free broadcasted!', 2500); };
+    document.getElementById('vp2').onclick = () => { this.seatsFree = 3; this.renderSeats(); this.toast('"3 सवारी बैठ गई" — 3 seats free broadcasted!', 2500); };
+    document.getElementById('vp3').onclick = () => { this.seatsFree = 0; this.renderSeats(); this.toast('"गाड़ी फुल है" — Rickshaw Full broadcasted!', 2500); };
+
+    this.renderSeats();
+    this.checkAutoLogin();
+    SarthiDispatchBus.subscribe((type, payload) => this.onEvent(type, payload));
+    lucide.createIcons();
+
+    // Check for any pending requests already in the bus
+    setTimeout(() => {
+      if (SarthiDispatchBus.activeRequests.length > 0) {
+        const req = SarthiDispatchBus.activeRequests.find(r => r.status === 'PENDING');
+        if (req) this.showIncomingRequest(req);
+      }
+    }, 500);
+  },
+
+  checkAutoLogin() {
+    try {
+      const u = JSON.parse(localStorage.getItem('sarthi_auth_user') || 'null');
+      if (u && u.role === 'driver') {
+        this.showApp(u);
+        // Restore active trip if any
+        if (SarthiDispatchBus.currentTrip && SarthiDispatchBus.currentTrip.status === 'ACCEPTED') {
+          setTimeout(() => this.showActiveTrip(SarthiDispatchBus.currentTrip), 300);
+        }
+      }
+    } catch(e) {}
+  },
+
+  login() {
+    const pin = document.getElementById('login-pin').value.trim();
+    if (pin === '1234') {
+      const u = SarthiDispatchBus.login('driver');
+      this.showApp(u);
+    } else {
+      document.getElementById('login-err').classList.remove('hidden');
+    }
+  },
+
+  logout() {
+    if (!confirm('Sign out of driver account?')) return;
+    SarthiDispatchBus.logout();
+    clearInterval(this.countdownTimer);
+    if (this.map) { this.map.remove(); this.map = null; }
+    document.getElementById('screen-app').classList.add('hidden');
+    document.getElementById('screen-login').classList.remove('hidden');
+    lucide.createIcons();
+  },
+
+  showApp(u) {
+    document.getElementById('screen-login').classList.add('hidden');
+    document.getElementById('screen-app').classList.remove('hidden');
+    document.getElementById('drv-greeting').textContent = 'Welcome, ' + u.name.split(' ')[0] + '!';
+    document.getElementById('avatar-btn').textContent = u.name[0];
+    lucide.createIcons();
+  },
+
+  toggleOnline() {
+    this.isOnline = !this.isOnline;
+    const btn = document.getElementById('btn-online-toggle');
+    const label = document.getElementById('online-label');
+    const banner = document.getElementById('offline-banner');
+    const idle = document.getElementById('panel-idle');
+    if (this.isOnline) {
+      btn.className = 'online-toggle active';
+      label.textContent = 'Online';
+      banner.classList.add('hidden');
+      idle.classList.remove('hidden');
+      this.toast('You are now ONLINE. Ready to receive rides!', 2500);
+    } else {
+      btn.className = 'online-toggle offline-mode';
+      label.textContent = 'Offline';
+      banner.classList.remove('hidden');
+      idle.classList.add('hidden');
+      this.toast('You are now OFFLINE.', 2000);
+    }
+    lucide.createIcons();
+  },
+
+  adjustSeats(delta) {
+    this.seatsFree = Math.min(6, Math.max(0, this.seatsFree + delta));
+    this.renderSeats();
+    this.toast('Seat update: ' + this.seatsFree + ' of 6 seats free — broadcasted to radars!', 2000);
+  },
+
+  renderSeats() {
+    document.getElementById('seat-count').textContent = this.seatsFree;
+    const grid = document.getElementById('seat-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'seat-pip ' + (i < (6 - this.seatsFree) ? 'occ' : 'free');
+      grid.appendChild(pip);
+    }
+  },
+
+  showIncomingRequest(req) {
+    if (!this.isOnline) return;
+    this.pendingRequest = req;
+    document.getElementById('req-rider-name').textContent = req.riderName || 'Rider';
+    document.getElementById('req-rider-phone').textContent = req.riderPhone || '';
+    document.getElementById('req-rider-initial').textContent = (req.riderName || 'R')[0];
+    document.getElementById('req-pickup').textContent = req.pickup || 'Pickup';
+    document.getElementById('req-dropoff').textContent = req.dropoff || 'Dropoff';
+    document.getElementById('req-seats').textContent = req.seats || 1;
+    document.getElementById('req-fare').textContent = '\u20B9' + (req.fare || 11);
+    document.getElementById('req-dist').textContent = (req.distanceMeters || 650) + 'm';
+    document.getElementById('panel-idle').classList.add('hidden');
+    document.getElementById('panel-incoming').classList.remove('hidden');
+    lucide.createIcons();
+    this.startCountdown(30);
+    this.toast('New ride request from ' + (req.riderName || 'a rider') + '!', 4000);
+  },
+
+  startCountdown(secs) {
+    clearInterval(this.countdownTimer);
+    let rem = secs;
+    const bar = document.getElementById('countdown-bar');
+    const val = document.getElementById('countdown-val');
+    this.countdownTimer = setInterval(() => {
+      rem--;
+      val.textContent = rem + 's';
+      bar.style.width = ((rem / secs) * 100) + '%';
+      if (rem <= 10) bar.style.background = 'var(--red)';
+      if (rem <= 0) {
+        clearInterval(this.countdownTimer);
+        this.declineRide();
+        this.toast('Request auto-declined (timeout).', 2500);
+      }
+    }, 1000);
+  },
+
+  acceptRide() {
+    clearInterval(this.countdownTimer);
+    if (!this.pendingRequest) return;
+    const trip = SarthiDispatchBus.acceptRide(this.pendingRequest.id, SarthiDispatchBus.accounts.driver);
+    this.showActiveTrip(trip);
+    // Adjust seats
+    this.seatsFree = Math.max(0, this.seatsFree - (this.pendingRequest.seats || 1));
+    this.renderSeats();
+    this.pendingRequest = null;
+    document.getElementById('panel-incoming').classList.add('hidden');
+  },
+
+  declineRide() {
+    clearInterval(this.countdownTimer);
+    if (this.pendingRequest) {
+      SarthiDispatchBus.cancelRide(this.pendingRequest.id);
+      this.pendingRequest = null;
+    }
+    document.getElementById('panel-incoming').classList.add('hidden');
+    document.getElementById('panel-idle').classList.remove('hidden');
+    this.toast('Ride request declined.', 2000);
+  },
+
+  showActiveTrip(trip) {
+    this.activeTrip = trip;
+    document.getElementById('active-pickup').textContent = trip.pickup || 'Pickup';
+    document.getElementById('active-dropoff').textContent = trip.dropoff || 'Dropoff';
+    document.getElementById('active-rider-name').textContent = trip.riderName || 'Rider';
+    document.getElementById('active-fare').textContent = '\u20B9' + (trip.fare || 11);
+    document.getElementById('panel-idle').classList.add('hidden');
+    document.getElementById('panel-incoming').classList.add('hidden');
+    document.getElementById('panel-active-trip').classList.remove('hidden');
+    lucide.createIcons();
+    this.initDriverMap(trip);
+    this.toast('Ride accepted! Navigate to pickup.', 3000);
+  },
+
+  initDriverMap(trip) {
+    if (this.map) { this.map.remove(); this.map = null; }
+    const pll = STOPS[trip.pickup] || [28.6946, 77.2167];
+    const dll = STOPS[trip.dropoff] || [28.6812, 77.2091];
+    this.map = L.map('driver-map', {zoomControl:false, attributionControl:false}).setView(pll, 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    L.marker(pll, {icon: L.divIcon({className:'', html:'<div style="background:#1B3A63;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>', iconSize:[14,14]})}).bindPopup('Rider Pickup').addTo(this.map);
+    L.marker(dll, {icon: L.divIcon({className:'', html:'<div style="background:#FFB347;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>', iconSize:[14,14]})}).bindPopup('Drop-off').addTo(this.map);
+    L.polyline([pll, dll], {color:'#0B4F4A', weight:3, dashArray:'6,6', opacity:.8}).addTo(this.map);
+    // Driver position starts near pickup
+    const ds = [pll[0]+0.002, pll[1]-0.001];
+    L.marker(ds, {icon: L.divIcon({className:'', html:'<div style="font-size:22px;">&#x1F6FA;</div>', iconSize:[26,26]})}).bindPopup('You').addTo(this.map);
+  },
+
+  completeTrip() {
+    if (!this.activeTrip) return;
+    const completed = SarthiDispatchBus.completeTrip(this.activeTrip.id);
+    if (this.map) { this.map.remove(); this.map = null; }
+    document.getElementById('panel-active-trip').classList.add('hidden');
+    document.getElementById('panel-idle').classList.remove('hidden');
+    // Update earnings
+    const fare = this.activeTrip.fare || 11;
+    const curEarn = parseInt(document.getElementById('earn-today').textContent.replace(/[^\d]/g,'')) + fare;
+    document.getElementById('earn-today').textContent = '\u20B9' + curEarn;
+    const trips = parseInt(document.getElementById('trips-today').textContent) + 1;
+    document.getElementById('trips-today').textContent = trips;
+    // Free seats
+    this.seatsFree = Math.min(6, this.seatsFree + (this.activeTrip.seats || 1));
+    this.renderSeats();
+    this.activeTrip = null;
+    this.toast('Trip completed! Earnings updated.', 3000);
+  },
+
+  onEvent(type, payload) {
+    if (type === 'RIDE_REQUESTED') {
+      if (this.isOnline && !this.pendingRequest && !this.activeTrip) {
+        this.showIncomingRequest(payload);
+      }
+    } else if (type === 'RIDE_CANCELLED') {
+      if (this.pendingRequest && payload && payload.id === this.pendingRequest.id) {
+        clearInterval(this.countdownTimer);
+        this.pendingRequest = null;
+        document.getElementById('panel-incoming').classList.add('hidden');
+        document.getElementById('panel-idle').classList.remove('hidden');
+        this.toast('Rider cancelled the request.', 2500);
+      }
+    }
+  },
+
+  toast(msg, dur=3000) {
+    const el = document.getElementById('toast-el');
+    document.getElementById('toast-msg-el').textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(this._t);
+    this._t = setTimeout(() => el.classList.add('hidden'), dur);
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => SarthiDriverApp.init());
+</script>
+</body>
+</html>
