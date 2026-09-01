@@ -1,0 +1,53 @@
+{
+  "pipeline_name": "sarthi-transit-intelligence-pipeline",
+  "rocketride_engine_version": "0.4.2",
+  "total_records_processed": 1000,
+  "execution_time_seconds": 5.939,
+  "throughput_records_per_sec": 168.4,
+  "auto_approved_count": 967,
+  "escalated_to_human_gate_count": 33,
+  "error_rate_pct": 0.0,
+  "total_cost_usd": 1.2,
+  "cost_per_100_runs_usd": 0.12,
+  "sample_escalated_incidents": [
+    {
+      "record_id": "REC-DL-1ER-9082-1788245285",
+      "verified_seats_free": 4,
+      "crowd_density_level": "HIGH_DEMAND",
+      "anomaly_detected": true,
+      "distress_sos": true,
+      "confidence_score": 0.5,
+      "reasoning": "EMERGENCY: Driver distress voice keyword detected.",
+      "recommended_driver_action": "Head toward Vishwavidyalaya Metro Gate 2 via Chhatra Marg",
+      "requires_human_gate": true,
+      "realworld_action_taken": "PAUSED_AT_HUMAN_GATE -> Awaiting Smart City Supervisor Override",
+      "estimated_cost_usd": 0.0012
+    },
+    {
+      "record_id": "REC-DL-1ER-2901-1788245285",
+      "verified_seats_free": 4,
+      "crowd_density_level": "HIGH_DEMAND",
+      "anomaly_detected": true,
+      "distress_sos": true,
+      "confidence_score": 0.5,
+      "reasoning": "EMERGENCY: Driver distress voice keyword detected.",
+      "recommended_driver_action": "Head toward Vishwavidyalaya Metro Gate 2 via Chhatra Marg",
+      "requires_human_gate": true,
+      "realworld_action_taken": "PAUSED_AT_HUMAN_GATE -> Awaiting Smart City Supervisor Override",
+      "estimated_cost_usd": 0.0012
+    },
+    {
+      "record_id": "REC-DL-1ER-1144-1788245285",
+      "verified_seats_free": 4,
+      "crowd_density_level": "HIGH_DEMAND",
+      "anomaly_detected": true,
+      "distress_sos": true,
+      "confidence_score": 0.5,
+      "reasoning": "EMERGENCY: Driver distress voice keyword detected.",
+      "recommended_driver_action": "Head toward Vishwavidyalaya Metro Gate 2 via Chhatra Marg",
+      "requires_human_gate": true,
+      "realworld_action_taken": "PAUSED_AT_HUMAN_GATE -> Awaiting Smart City Supervisor Override",
+      "estimated_cost_usd": 0.0012
+    }
+  ]
+}

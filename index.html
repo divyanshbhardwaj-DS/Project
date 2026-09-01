@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SARTHI — Intelligent Shared Mobility Platform | Making the Last Mile Visible</title>
+  <meta name="description" content="Digitizing India's Informal Shared E-Rickshaw Network with zero hardware cost, live radar, seat availability, and smart routing.">
+  
+  <!-- Google Fonts: Poppins & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js for City Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-sarthi">
+
+  <!-- TOP GLOBAL NAV BAR / PROTOTYPE CONTROLLER -->
+  <header class="prototype-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <div class="radar-mini-icon">
+          <span class="dot"></span>
+          <span class="ring ring-1"></span>
+          <span class="ring ring-2"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">SARTHI</span>
+          <span class="brand-tagline">Making the Last Mile Visible</span>
+        </div>
+      </div>
+      <div class="status-pill live-pill">
+        <span class="pulse-green"></span>
+        <span>LIVE SIMULATION ACTIVE</span>
+      </div>
+    </div>
+
+    <!-- Active View Selector Tabs -->
+    <nav class="view-selector">
+      <button class="nav-btn active" data-view="passenger" id="btn-view-passenger">
+        <i data-lucide="smartphone"></i>
+        <span>Passenger App</span>
+      </button>
+      <button class="nav-btn" data-view="driver" id="btn-view-driver">
+        <i data-lucide="steering-wheel"></i>
+        <span>Driver Cockpit</span>
+        <span class="badge-seat-sync" id="global-seat-badge">4/6 Seats</span>
+      </button>
+      <button class="nav-btn" data-view="city" id="btn-view-city">
+        <i data-lucide="building-2"></i>
+        <span>Smart City Transit Hub</span>
+      </button>
+      <button class="nav-btn" data-view="rocketride" id="btn-view-rocketride">
+        <i data-lucide="zap"></i>
+        <span>RocketRide Pipeline</span>
+        <span class="badge-seat-sync" style="background:#FFB347;color:#122846;font-weight:800;">Meta-Harness</span>
+      </button>
+      <button class="nav-btn" data-view="pitch" id="btn-view-pitch">
+        <i data-lucide="presentation"></i>
+        <span>Pitch Deck & Solution</span>
+      </button>
+    </nav>
+
+    <!-- Global Controls -->
+    <div class="header-right">
+      <!-- Language Selector -->
+      <div class="lang-selector">
+        <i data-lucide="languages"></i>
+        <select id="lang-select" title="Change Language">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="hinglish">Hinglish</option>
+        </select>
+      </div>
+
+      <!-- Quick Sim Triggers -->
+      <div class="sim-speed-box">
+        <button id="btn-sim-play" class="btn-icon" title="Toggle Sim Running"><i data-lucide="pause"></i></button>
+        <button id="btn-sim-rush" class="btn-pill-amber" title="Trigger Rush Hour Crowd"><i data-lucide="users"></i> Rush Hour</button>
+        <button id="btn-sim-ussd" class="btn-icon" title="Feature Phone USSD Demo"><i data-lucide="phone"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="main-container">
+    
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: PASSENGER EXPERIENCE (MOBILE PWA PHONE SIMULATOR & WORKSPACE)     -->
+    <!-- ========================================================================= -->
+    <section id="view-passenger" class="view-panel active">
+      <div class="passenger-workspace">
+        
+        <!-- Left Sidebar: Route & Simulation Overview -->
+        <aside class="passenger-info-sidebar">
+          <div class="info-card hero-mini-card">
+            <div class="hero-mini-content">
+              <span class="pill-gold">North Campus Corridor Pilot</span>
+              <h3>Vishwavidyalaya Metro ⇄ Hansraj ⇄ Kamla Nagar</h3>
+              <p>Real-time visibility layer over informal e-rickshaws. Zero wait-time guesswork.</p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-title">
+              <i data-lucide="zap"></i>
+              <h4>AI Smart-Stop Recommendation</h4>
+            </div>
+            <div class="smart-stop-box" id="passenger-smart-stop-rec">
+              <div class="rec-header">
+                <span class="badge-rec">OPTIMAL CHOICE</span>
+                <span class="time-save">Saves ~4.5 mins</span>
+              </div>
+              <p class="rec-text">Walk <strong>65m to Metro Gate 2</strong> instead of waiting at your current spot. Rickshaw #1 arriving in <strong>2 min</strong> with <strong>4 seats</strong> free.</p>
+              <button class="btn-subtle-amber" id="btn-guide-walk"><i data-lucide="navigation"></i> Show Walk Path on Map</button>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-title">
+              <i data-lucide="radio"></i>
+              <h4>Signal Your Demand</h4>
+            </div>
+            <p class="card-desc">Standing at an unmarked corner? Ping drivers with 1-tap beacon.</p>
+            <button class="btn-action-teal" id="btn-signal-demand">
+              <i data-lucide="map-pin"></i>
+              <span>Signal "I'm Waiting Here"</span>
+            </button>
+            <div id="demand-signal-status" class="demand-signal-status hidden">
+              <span class="pulse-amber"></span>
+              <span>Demand beacon active (Broadcasting to 4 drivers nearby)</span>
+            </div>
+          </div>
+
+          <div class="info-card quick-links-card">
+            <div class="card-title">
+              <i data-lucide="shield-check"></i>
+              <h4>Safety & Emergency SOS</h4>
+            </div>
+            <div class="sos-actions">
+              <button class="btn-sos-danger" id="btn-trigger-sos">
+                <i data-lucide="shield-alert"></i>
+                <span>One-Tap SOS Alert</span>
+              </button>
+              <button class="btn-share-trip" id="btn-share-trip">
+                <i data-lucide="share-2"></i>
+                <span>Share Live Ride Link</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Center / Mobile App Preview Frame -->
+        <div class="phone-wrapper">
+          <div class="smartphone-frame">
+            <!-- Notch & Speaker -->
+            <div class="phone-notch">
+              <div class="notch-speaker"></div>
+              <div class="notch-camera"></div>
+            </div>
+
+            <!-- Phone Screen Content -->
+            <div class="phone-screen" id="phone-screen">
+              
+              <!-- Screen 1: Splash (can be re-triggered) -->
+              <div id="screen-splash" class="phone-view hidden">
+                <div class="splash-body">
+                  <div class="splash-radar">
+                    <div class="splash-dot"></div>
+                    <div class="splash-wave w1"></div>
+                    <div class="splash-wave w2"></div>
+                    <div class="splash-wave w3"></div>
+                    <div class="splash-icon">🛺</div>
+                  </div>
+                  <h1 class="splash-logo">SARTHI</h1>
+                  <p class="splash-sub">Making the Last Mile Visible</p>
+                  <div class="splash-loader"></div>
+                </div>
+              </div>
+
+              <!-- Screen 2: OTP Login Demo -->
+              <div id="screen-login" class="phone-view hidden">
+                <div class="login-header">
+                  <div class="login-logo-mini">SARTHI</div>
+                  <span class="login-badge">Passenger Login</span>
+                </div>
+                <div class="login-body">
+                  <h3>Enter Mobile Number</h3>
+                  <p>We'll send an OTP to verify your account</p>
+                  <div class="phone-input-group">
+                    <span class="country-code">+91</span>
+                    <input type="tel" value="98765 43210" id="login-phone" placeholder="Enter 10-digit number">
+                  </div>
+                  <button class="btn-primary-indigo" id="btn-send-otp">Send Verification OTP</button>
+                  <div class="demo-hint">Demo Auto-Fill Enabled. Tap button to proceed.</div>
+                </div>
+              </div>
+
+              <!-- Screen 3: Main Passenger Radar & Map (Primary) -->
+              <div id="screen-home" class="phone-view active">
+                
+                <!-- App Top Bar inside Phone -->
+                <div class="phone-app-bar">
+                  <div class="phone-brand">
+                    <span class="radar-dot"></span>
+                    <span class="title">SARTHI</span>
+                  </div>
+                  <div class="phone-actions">
+                    <button class="phone-icon-btn" id="phone-btn-lang" title="Toggle Hindi"><span class="lang-text">अ/A</span></button>
+                    <button class="phone-icon-btn sos-mini" id="phone-btn-sos" title="Emergency SOS"><i data-lucide="shield-alert"></i></button>
+                  </div>
+                </div>
+
+                <!-- Live Map Container inside Phone -->
+                <div class="phone-map-container" id="passenger-map">
+                  <!-- Leaflet Map attaches here -->
+                  <div class="map-overlay-controls">
+                    <button class="map-ctrl-btn" id="btn-recenter-user" title="Center on My Location"><i data-lucide="crosshair"></i></button>
+                    <button class="map-ctrl-btn" id="btn-toggle-route-lines" title="Toggle Learned Route Lines"><i data-lucide="git-commit"></i></button>
+                  </div>
+                  <div class="map-banner-chip" id="map-radar-chip">
+                    <span class="pulse-live"></span>
+                    <span id="nearby-rickshaw-count">4 E-Rickshaws Active Nearby</span>
+                  </div>
+                </div>
+
+                <!-- Bottom Sheet / Nearby Rickshaw Cards -->
+                <div class="bottom-sheet" id="passenger-bottom-sheet">
+                  <div class="sheet-handle-bar"><div class="sheet-handle"></div></div>
+                  
+                  <div class="sheet-header">
+                    <div class="sheet-title-box">
+                      <h3>Nearby Rickshaws</h3>
+                      <span class="sub" id="sheet-sub-text">Live updates via Driver GPS</span>
+                    </div>
+                    <button class="btn-chip-action" id="btn-scan-qr-open"><i data-lucide="qr-code"></i> Board / QR</button>
+                  </div>
+
+                  <!-- Rickshaw List Cards -->
+                  <div class="rickshaw-cards-list" id="nearby-rickshaws-list">
+                    <!-- Dynamic items rendered via JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Screen 4: Live Tracking Detail View -->
+              <div id="screen-tracking" class="phone-view hidden">
+                <div class="phone-app-bar bar-translucent">
+                  <button class="phone-icon-btn" id="btn-back-to-home"><i data-lucide="arrow-left"></i></button>
+                  <span class="tracking-title">Live Rickshaw Radar</span>
+                  <button class="phone-icon-btn" id="btn-tracking-share"><i data-lucide="share-2"></i></button>
+                </div>
+
+                <div class="tracking-map-holder" id="tracking-map-preview">
+                  <!-- Sub map or highlighted vehicle view -->
+                </div>
+
+                <div class="tracking-details-card">
+                  <div class="track-header">
+                    <div class="driver-profile-mini">
+                      <div class="driver-avatar">🛺</div>
+                      <div>
+                        <h4 id="track-driver-name">Ramesh Kumar</h4>
+                        <span class="driver-vehicle-no" id="track-vehicle-no">DL 1ER 4921 • Sarthi Verified</span>
+                      </div>
+                    </div>
+                    <div class="track-seat-badge" id="track-seats-badge">
+                      <span class="seat-num">4</span>
+                      <span class="seat-lbl">Seats Free</span>
+                    </div>
+                  </div>
+
+                  <div class="eta-countdown-box">
+                    <div class="eta-left">
+                      <span class="eta-label">ESTIMATED ARRIVAL</span>
+                      <div class="eta-timer" id="track-eta-timer">02:45 <span class="mins">min</span></div>
+                    </div>
+                    <div class="eta-right">
+                      <button class="btn-notify-toggle active" id="btn-notify-toggle">
+                        <i data-lucide="bell"></i>
+                        <span>Notify at 2 min</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="trip-route-timeline">
+                    <div class="timeline-step done">
+                      <span class="step-dot"></span>
+                      <div class="step-info">
+                        <strong>Vishwavidyalaya Metro (Origin)</strong>
+                        <span>Passed 3 mins ago</span>
+                      </div>
+                    </div>
+                    <div class="timeline-step current">
+                      <span class="step-dot pulse"></span>
+                      <div class="step-info">
+                        <strong>Hansraj College Gate (Your Pick-up)</strong>
+                        <span>ETA 2 mins • 65m away</span>
+                      </div>
+                    </div>
+                    <div class="timeline-step">
+                      <span class="step-dot"></span>
+                      <div class="step-info">
+                        <strong>Kamla Nagar Market (Drop-off)</strong>
+                        <span>Est. 8 mins total ride</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="track-footer-actions">
+                    <button class="btn-board-now" id="btn-board-from-tracking"><i data-lucide="qr-code"></i> Board & Scan QR (₹10)</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Screen 5: QR Boarding & Hybrid Payment Modal -->
+              <div id="screen-boarding" class="phone-view hidden">
+                <div class="phone-app-bar">
+                  <button class="phone-icon-btn" id="btn-close-boarding"><i data-lucide="x"></i></button>
+                  <span class="tracking-title">Confirm Boarding</span>
+                  <span></span>
+                </div>
+
+                <div class="boarding-content">
+                  <div class="qr-scanner-sim">
+                    <div class="scanner-frame">
+                      <div class="scan-laser"></div>
+                      <div class="qr-mockup">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SARTHI-RICKSHAW-DL1ER4921" alt="Driver QR Code">
+                      </div>
+                    </div>
+                    <p class="scan-instruction">Scan driver's Sarthi QR code on vehicle</p>
+                  </div>
+
+                  <div class="fare-calc-card">
+                    <div class="fare-row">
+                      <span>Base Shared Fare</span>
+                      <span class="fare-val">₹10.00</span>
+                    </div>
+                    <div class="fare-row">
+                      <span>Convenience / Safe-pass</span>
+                      <span class="fare-val">₹1.00</span>
+                    </div>
+                    <div class="fare-row total">
+                      <span>Total Payable</span>
+                      <span class="fare-total">₹11.00</span>
+                    </div>
+                  </div>
+
+                  <div class="payment-method-selector">
+                    <label class="pay-option selected">
+                      <input type="radio" name="pay-method" value="upi" checked>
+                      <i data-lucide="smartphone"></i>
+                      <span>Instant UPI QR</span>
+                    </label>
+                    <label class="pay-option">
+                      <input type="radio" name="pay-method" value="cash">
+                      <i data-lucide="banknote"></i>
+                      <span>Cash (Driver Logged)</span>
+                    </label>
+                  </div>
+
+                  <button class="btn-primary-indigo" id="btn-confirm-payment">
+                    <i data-lucide="check-circle-2"></i> Confirm Boarding (₹11)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Screen 6: Boarding Success & Live Trip State -->
+              <div id="screen-success" class="phone-view hidden">
+                <div class="success-body">
+                  <div class="success-check-anim">
+                    <i data-lucide="check"></i>
+                  </div>
+                  <h2>Boarding Confirmed!</h2>
+                  <p class="success-sub">Seat locked with <strong>DL 1ER 4921</strong> (Ramesh Kumar)</p>
+                  
+                  <div class="digital-ticket-card">
+                    <div class="ticket-row">
+                      <span>Trip ID</span>
+                      <strong>#SARTHI-8924</strong>
+                    </div>
+                    <div class="ticket-row">
+                      <span>Fare Paid</span>
+                      <span class="paid-tag">₹11 (UPI Paid)</span>
+                    </div>
+                    <div class="ticket-row">
+                      <span>Destination</span>
+                      <strong>Kamla Nagar Chauraha</strong>
+                    </div>
+                  </div>
+
+                  <div class="sos-during-trip">
+                    <button class="btn-sos-inline" id="btn-trip-sos"><i data-lucide="shield-alert"></i> Emergency SOS Live</button>
+                    <button class="btn-end-trip-demo" id="btn-end-trip-demo">Simulate Trip Completion</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Screen 7: Ride History & Rating -->
+              <div id="screen-history" class="phone-view hidden">
+                <div class="phone-app-bar">
+                  <button class="phone-icon-btn" id="btn-history-back"><i data-lucide="arrow-left"></i></button>
+                  <span class="tracking-title">My Trips & History</span>
+                  <span></span>
+                </div>
+                <div class="history-list">
+                  <div class="history-item">
+                    <div class="hist-top">
+                      <span class="hist-date">Today, 08:35 AM</span>
+                      <span class="hist-fare">₹11.00</span>
+                    </div>
+                    <div class="hist-route">Vishwavidyalaya Metro ➔ Hansraj College</div>
+                    <div class="hist-stars">★★★★★ • Driver: Ramesh Kumar</div>
+                  </div>
+                  <div class="history-item">
+                    <div class="hist-top">
+                      <span class="hist-date">Yesterday, 05:20 PM</span>
+                      <span class="hist-fare">₹10.00</span>
+                    </div>
+                    <div class="hist-route">Kamla Nagar ➔ Metro Gate 3</div>
+                    <div class="hist-stars">★★★★★ • Driver: Suresh Sharma</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Phone Bottom Navigation Bar -->
+            <div class="phone-bottom-nav">
+              <button class="p-nav-item active" data-target="home"><i data-lucide="compass"></i><span>Radar</span></button>
+              <button class="p-nav-item" data-target="history"><i data-lucide="clock"></i><span>History</span></button>
+              <button class="p-nav-item" data-target="sos"><i data-lucide="shield"></i><span>Safety</span></button>
+              <button class="p-nav-item" data-target="login"><i data-lucide="user"></i><span>Profile</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Sidebar: Interactive Live Feed & Prototype Tour -->
+        <aside class="passenger-right-sidebar">
+          <div class="info-card">
+            <div class="card-title">
+              <i data-lucide="activity"></i>
+              <h4>Live Network Telemetry</h4>
+            </div>
+            <div class="telemetry-stats">
+              <div class="stat-mini">
+                <span class="num" id="telemetry-active-drivers">6</span>
+                <span class="lbl">Broadcasting Drivers</span>
+              </div>
+              <div class="stat-mini">
+                <span class="num" id="telemetry-avg-wait">3.2m</span>
+                <span class="lbl">Average ETA</span>
+              </div>
+              <div class="stat-mini">
+                <span class="num" id="telemetry-free-seats">16</span>
+                <span class="lbl">Available Seats</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-title">
+              <i data-lucide="sparkles"></i>
+              <h4>Key Innovation Highlights</h4>
+            </div>
+            <ul class="highlight-bullets">
+              <li><strong>Zero New Vehicles:</strong> Makes existing shared rides visible.</li>
+              <li><strong>No Hardware Costs:</strong> Uses driver's existing smartphone GPS.</li>
+              <li><strong>Auto-Learned Routes:</strong> GPS trails cluster into informal transit corridors.</li>
+              <li><strong>Inclusion-First:</strong> SMS/USSD fallback for feature-phone users.</li>
+            </ul>
+          </div>
+
+          <div class="info-card pilot-banner-card">
+            <img src="assets/sarthi_hero.jpg" alt="Sarthi Hero Illustration" class="pilot-img">
+            <div class="pilot-caption">
+              <strong>Pilot Route:</strong> Delhi University North Campus Corridor
+              <span>1 Metro Hub • 4 College Gates • 2 Market Stops</span>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: DRIVER COCKPIT & EARNINGS DASHBOARD                               -->
+    <!-- ========================================================================= -->
+    <section id="view-driver" class="view-panel">
+      <div class="driver-cockpit-grid">
+        
+        <!-- Driver Status & Live Broadcasting Panel -->
+        <div class="driver-main-card">
+          <div class="driver-header-bar">
+            <div class="driver-identity">
+              <div class="driver-avatar-lg">🛺</div>
+              <div>
+                <h2>Ramesh Kumar (सारथी चालक #104)</h2>
+                <div class="driver-meta">
+                  <span class="badge-verified"><i data-lucide="check-check"></i> Sarthi Verified ID</span>
+                  <span class="vehicle-tag">DL 1ER 4921 • Electric 6-Seater</span>
+                  <span class="rating-tag">★ 4.9 (420+ rides)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Master Duty Toggle -->
+            <div class="duty-toggle-wrapper">
+              <span class="duty-label" id="driver-duty-status-text">ON ROUTE / BROADCASTING</span>
+              <label class="switch-glow">
+                <input type="checkbox" id="driver-duty-toggle" checked>
+                <span class="slider-glow"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Quick 1-Tap Seat Management Counter -->
+          <div class="seat-counter-section">
+            <div class="seat-counter-header">
+              <div>
+                <h3>Live Seat Availability Broadcast</h3>
+                <p>One-tap seat updater. Synchronizes immediately with all passenger radars.</p>
+              </div>
+              <div class="voice-cue-indicator" id="driver-voice-cue">
+                <i data-lucide="mic"></i>
+                <span id="voice-cue-text">Voice Active: "सारथी, 4 सीट खाली हैं"</span>
+              </div>
+            </div>
+
+            <div class="seat-control-box">
+              <button class="btn-seat-step btn-minus" id="btn-seat-minus" title="One passenger got in (1 less seat)"><i data-lucide="minus"></i></button>
+              
+              <div class="seat-display">
+                <div class="seat-visual-grid" id="seat-visual-grid">
+                  <!-- 6 seats visually rendered -->
+                  <div class="seat-icon-box occupied"><i data-lucide="user"></i><span>Occ</span></div>
+                  <div class="seat-icon-box occupied"><i data-lucide="user"></i><span>Occ</span></div>
+                  <div class="seat-icon-box free"><i data-lucide="user-check"></i><span>Free</span></div>
+                  <div class="seat-icon-box free"><i data-lucide="user-check"></i><span>Free</span></div>
+                  <div class="seat-icon-box free"><i data-lucide="user-check"></i><span>Free</span></div>
+                  <div class="seat-icon-box free"><i data-lucide="user-check"></i><span>Free</span></div>
+                </div>
+                <div class="seat-number-readout">
+                  <span class="huge-number" id="driver-free-seat-count">4</span>
+                  <span class="seat-fraction">/ 6 Seats Free</span>
+                </div>
+              </div>
+
+              <button class="btn-seat-step btn-plus" id="btn-seat-plus" title="One passenger got off (1 more seat)"><i data-lucide="plus"></i></button>
+            </div>
+
+            <!-- Voice Quick Actions for low-literacy drivers -->
+            <div class="driver-voice-bar">
+              <button class="btn-voice-pill" id="btn-voice-empty"><i data-lucide="volume-2"></i> "सभी सीट खाली" (All Free)</button>
+              <button class="btn-voice-pill" id="btn-voice-half"><i data-lucide="volume-2"></i> "3 सवारी बैठ गई" (3 Left)</button>
+              <button class="btn-voice-pill" id="btn-voice-full"><i data-lucide="volume-2"></i> "गाड़ी फुल है" (Full)</button>
+            </div>
+          </div>
+
+          <!-- Driver Live Map & AI Demand Heatmap -->
+          <div class="driver-map-container">
+            <div class="driver-map-header">
+              <div class="d-map-title">
+                <i data-lucide="flame"></i>
+                <h4>AI Real-Time Demand Heatmap & Positioning Nudges</h4>
+              </div>
+              <div class="d-map-tags">
+                <span class="badge-heat-high">🔥 Vishwavidyalaya Metro (HIGH DEMAND)</span>
+                <span class="badge-heat-med">Hansraj Gate (Moderate)</span>
+              </div>
+            </div>
+            <div id="driver-heatmap" class="driver-map-leaflet"></div>
+          </div>
+        </div>
+
+        <!-- Driver Earnings, AI Loop Nudges, & QR Scanner -->
+        <div class="driver-side-panel">
+          
+          <!-- Daily Earnings Card -->
+          <div class="driver-metric-card">
+            <div class="metric-top">
+              <span>Today's Earnings</span>
+              <span class="badge-live-earning">+₹40 last hour</span>
+            </div>
+            <div class="huge-earning">₹520<span class="currency">.00</span></div>
+            <div class="earning-breakdown">
+              <div class="e-item">
+                <span class="val">18</span>
+                <span class="lbl">Trips Completed</span>
+              </div>
+              <div class="e-item">
+                <span class="val">38 km</span>
+                <span class="lbl">Distance Run</span>
+              </div>
+              <div class="e-item">
+                <span class="val">₹95</span>
+                <span class="lbl">Fuel/Battery Saved</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Peak Loop Nudge Card -->
+          <div class="driver-nudge-card">
+            <div class="nudge-header">
+              <i data-lucide="navigation"></i>
+              <h4>Smart Positioning Loop</h4>
+            </div>
+            <p class="nudge-text">⚡ <strong>14 passengers</strong> waiting near Metro Gate 2. Head there now via Chhatra Marg for <strong>3.2x faster fill rate</strong>.</p>
+            <button class="btn-action-amber" id="btn-accept-nudge"><i data-lucide="check"></i> Follow Recommended Loop</button>
+          </div>
+
+          <!-- Driver Vehicle QR Display -->
+          <div class="driver-qr-card">
+            <h4>Your Sarthi Boarding QR</h4>
+            <p>Passengers scan to board and pay ₹10/₹15</p>
+            <div class="driver-qr-display">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SARTHI-RICKSHAW-DL1ER4921" alt="Driver QR">
+            </div>
+            <div class="qr-vehicle-code">VEHICLE ID: SARTHI-DL-1ER-4921</div>
+          </div>
+
+          <!-- Driver SOS Safety trigger -->
+          <div class="driver-emergency-card">
+            <button class="btn-sos-driver" id="btn-driver-sos">
+              <i data-lucide="phone-call"></i> Driver Emergency Hotline
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: SMART CITY TRANSIT & FLEET INTELLIGENCE COMMAND CENTER            -->
+    <!-- ========================================================================= -->
+    <section id="view-city" class="view-panel">
+      <div class="city-dashboard">
+        
+        <!-- City Top Metric Summary Cards -->
+        <div class="city-metrics-row">
+          <div class="city-stat-card">
+            <div class="stat-icon-wrap teal"><i data-lucide="compass"></i></div>
+            <div class="stat-content">
+              <span class="stat-label">Informal Transit Made Visible</span>
+              <div class="stat-number">100% <span class="trend positive">↑ Zero Hardware</span></div>
+              <span class="stat-sub">48 Registered E-Rickshaws on DU Corridor</span>
+            </div>
+          </div>
+
+          <div class="city-stat-card">
+            <div class="stat-icon-wrap amber"><i data-lucide="clock"></i></div>
+            <div class="stat-content">
+              <span class="stat-label">Avg. Commuter Wait Time</span>
+              <div class="stat-number">3.8 <span class="unit">min</span> <span class="trend positive">↓ from 14.2 min</span></div>
+              <span class="stat-sub">73% reduction in idle stop waiting</span>
+            </div>
+          </div>
+
+          <div class="city-stat-card">
+            <div class="stat-icon-wrap green"><i data-lucide="leaf"></i></div>
+            <div class="stat-content">
+              <span class="stat-label">CO2 & Energy Waste Avoided</span>
+              <div class="stat-number">1,480 <span class="unit">kg CO2</span></div>
+              <span class="stat-sub">34% less empty cruising by drivers</span>
+            </div>
+          </div>
+
+          <div class="city-stat-card">
+            <div class="stat-icon-wrap indigo"><i data-lucide="trending-up"></i></div>
+            <div class="stat-content">
+              <span class="stat-label">Driver Income Growth</span>
+              <div class="stat-number">+28.5% <span class="trend positive">↑ / day</span></div>
+              <span class="stat-sub">From 11 trips/day to 16 trips/day avg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Row: Interactive Transit Map + AI Route Clustering -->
+        <div class="city-map-row">
+          <div class="city-map-panel">
+            <div class="city-panel-header">
+              <div class="city-title">
+                <i data-lucide="map"></i>
+                <h3>Macro Fleet Telemetry & Auto-Learned Route Clustering</h3>
+              </div>
+              <div class="city-map-toggles">
+                <label class="filter-pill active"><input type="checkbox" id="chk-show-clusters" checked> AI Inferred Routes</label>
+                <label class="filter-pill active"><input type="checkbox" id="chk-show-heat" checked> Demand Density</label>
+                <label class="filter-pill active"><input type="checkbox" id="chk-show-rickshaws" checked> Live E-Rickshaws</label>
+              </div>
+            </div>
+            <div id="city-fleet-map" class="city-leaflet-map"></div>
+          </div>
+
+          <!-- Right: AI Models & Live Demand-Supply Balance Chart -->
+          <div class="city-analytics-panel">
+            <div class="city-panel-header">
+              <div class="city-title">
+                <i data-lucide="bar-chart-3"></i>
+                <h3>Hourly Demand vs Fleet Supply</h3>
+              </div>
+              <span class="badge-live-feed">Real-time GPS Feed</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="cityDemandChart"></canvas>
+            </div>
+
+            <!-- Auto-Learned Corridor List -->
+            <div class="learned-routes-box">
+              <h4>Auto-Discovered Corridors (GPS Clustering)</h4>
+              <div class="corridor-item">
+                <div class="corridor-info">
+                  <strong>Corridor A: Metro ⇄ Kamla Nagar Market</strong>
+                  <span>2.4 km • 18 active vehicles • 4 min frequency</span>
+                </div>
+                <span class="badge-corridor-status high">98% Match</span>
+              </div>
+              <div class="corridor-item">
+                <div class="corridor-info">
+                  <strong>Corridor B: Metro ⇄ Arts Faculty & Hansraj</strong>
+                  <span>1.8 km • 14 active vehicles • 2 min frequency</span>
+                </div>
+                <span class="badge-corridor-status high">99% Match</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: STARTUP PROPOSAL & COMPETITION PITCH DECK SHOWCASE               -->
+    <!-- ========================================================================= -->
+    <section id="view-pitch" class="view-panel">
+      <div class="pitch-container">
+        
+        <!-- Pitch Deck Header Hero -->
+        <div class="pitch-hero">
+          <div class="pitch-hero-left">
+            <span class="pitch-tag">STARTUP PROPOSAL • NATIONAL COMPETITION SUBMISSION</span>
+            <h1>SARTHI</h1>
+            <h2>Intelligent Shared Mobility Platform</h2>
+            <p class="pitch-motto">“Making the Last Mile Visible — Digitizing India's Informal Shared E-Rickshaw Network”</p>
+            
+            <div class="pitch-chips">
+              <span class="chip-item"><i data-lucide="check-circle"></i> Zero Hardware Cost</span>
+              <span class="chip-item"><i data-lucide="check-circle"></i> Unsupervised Route Learning</span>
+              <span class="chip-item"><i data-lucide="check-circle"></i> Inclusive SMS/USSD Fallback</span>
+              <span class="chip-item"><i data-lucide="check-circle"></i> Sustainable Multi-Layer Revenue</span>
+            </div>
+          </div>
+          <div class="pitch-hero-right">
+            <img src="assets/sarthi_hero.jpg" alt="Sarthi Hero" class="pitch-hero-banner">
+          </div>
+        </div>
+
+        <!-- Interactive Pitch Section Navigator -->
+        <div class="pitch-nav-tabs">
+          <button class="p-tab-btn active" data-pitch-target="sec-exec">1. Executive Summary</button>
+          <button class="p-tab-btn" data-pitch-target="sec-problem">2. Problem & Validation</button>
+          <button class="p-tab-btn" data-pitch-target="sec-solution">3. Solution & Architecture</button>
+          <button class="p-tab-btn" data-pitch-target="sec-business">4. Business Model & Revenue</button>
+          <button class="p-tab-btn" data-pitch-target="sec-competition">5. Competitive Moat</button>
+          <button class="p-tab-btn" data-pitch-target="sec-judge">6. Judge 30s Pitch</button>
+        </div>
+
+        <!-- Section 1: Executive Summary -->
+        <div id="sec-exec" class="pitch-section active">
+          <div class="pitch-card-grid">
+            <div class="pitch-content-card">
+              <h3>Core Thesis</h3>
+              <p>Every day, tens of millions of Indian commuters and students rely on shared e-rickshaws. However, the entire system operates on <strong>pure tribal guesswork</strong>: no published schedules, no seat visibility, and no arrival forecasts.</p>
+              <p>Sarthi is <strong>not another ride-hailing dispatcher</strong> (like Uber or Ola). Sarthi is a lightweight, real-time <strong>visibility layer</strong> over the existing shared transit network.</p>
+            </div>
+            <div class="pitch-content-card">
+              <h3>Selected Name: SARTHI</h3>
+              <p>Derived from the ancient Hindi word for <em>‘guide / charioteer’</em> — evoking trust, direction, companionship, and safety. Tested against 10 contenders (RickPulse, RouteMitra, Setu Mobility, GaadiTrack) and selected for cross-linguistic memorability.</p>
+              <div class="quote-box">
+                “Sarthi doesn’t create new rides — it makes the rides that already exist visible, predictable, and efficient.”
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Problem & Real-world Validation -->
+        <div id="sec-problem" class="pitch-section hidden">
+          <div class="pitch-card-grid">
+            <div class="pitch-content-card">
+              <h3>The Real-world Triangle of Waste</h3>
+              <ul class="problem-list">
+                <li><strong>For Passengers:</strong> Uncertainty, wasted wait times (10–25 mins), unnecessary 400m+ walks to arbitrary stops, and safety anxiety for women/students.</li>
+                <li><strong>For Drivers:</strong> Battery/fuel drained roaming empty streets searching for passengers, unstable daily income, low trips-per-hour.</li>
+                <li><strong>For Cities:</strong> Needless congestion, horn pollution, and lack of any transit telemetry for Smart City planners.</li>
+              </ul>
+            </div>
+            <div class="pitch-content-card">
+              <h3>Why Existing Solutions Fail</h3>
+              <table class="pitch-table">
+                <thead>
+                  <tr>
+                    <th>Alternative</th>
+                    <th>Why It Fails for Shared E-Rickshaws</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Uber / Ola / Rapido</strong></td>
+                    <td>Built for single-passenger private dispatch with high 20–25% commissions. Destroys shared ₹10 unit economics.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>WhatsApp Groups</strong></td>
+                    <td>Unstructured, noisy, doesn't provide real-time GPS radar or seat counters.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Hardware GPS Trackers</strong></td>
+                    <td>Prohibitive hardware & SIM maintenance cost for informal driver-owners.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Solution & Technical Architecture -->
+        <div id="sec-solution" class="pitch-section hidden">
+          <div class="pitch-card-grid">
+            <div class="pitch-content-card">
+              <h3>Tech Stack Architecture</h3>
+              <div class="stack-grid">
+                <div class="stack-item">
+                  <strong>Frontend:</strong>
+                  <span>React Native + Ultra-lightweight PWA (Runs on low-spec phones)</span>
+                </div>
+                <div class="stack-item">
+                  <strong>Backend:</strong>
+                  <span>Node.js / NestJS + Socket.io (Low-latency concurrent location streams)</span>
+                </div>
+                <div class="stack-item">
+                  <strong>Database:</strong>
+                  <span>PostgreSQL + PostGIS (Sub-second geospatial 'nearby' bounding queries)</span>
+                </div>
+                <div class="stack-item">
+                  <strong>Real-time Cache:</strong>
+                  <span>Redis Pub/Sub (Geo-caching live rickshaw locations)</span>
+                </div>
+                <div class="stack-item">
+                  <strong>AI / ML Core:</strong>
+                  <span>FastAPI + Scikit/PyTorch (ETA prediction, unsupervised GPS trail clustering)</span>
+                </div>
+                <div class="stack-item">
+                  <strong>Inclusion Layer:</strong>
+                  <span>SMS & USSD Gateway (*99*77#) for non-smartphone commuters</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pitch-content-card">
+              <h3>Concrete AI Capabilities</h3>
+              <ul class="problem-list">
+                <li><strong>AI ETA Engine:</strong> Time-series on historical trip durations + time-of-day traffic.</li>
+                <li><strong>Unsupervised Route Ingestion:</strong> Automatically groups driver GPS breadcrumbs into informal route corridors without manual surveys.</li>
+                <li><strong>Smart Stop Matching:</strong> Minimizes [Wait Time + Walking Time] combined.</li>
+                <li><strong>Safety Anomaly Engine:</strong> Detects route deviations or unexpected long stops.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Business Model & Revenue Streams -->
+        <div id="sec-business" class="pitch-section hidden">
+          <div class="pitch-card-grid">
+            <div class="pitch-content-card">
+              <h3>Multi-Layer Monetization (No Heavy Commission)</h3>
+              <p>Since e-rickshaw margins are thin, Sarthi avoids heavy driver commissions and unlocks high-margin digital layers:</p>
+              <div class="revenue-layers">
+                <div class="rev-item">
+                  <strong>1. Passenger Convenience Safe-Pass:</strong>
+                  <span>₹1–₹2 optional booking-assurance & SOS link fee for confirmed seats.</span>
+                </div>
+                <div class="rev-item">
+                  <strong>2. Driver Pro Subscription:</strong>
+                  <span>₹99/month for advanced demand heatmaps, earnings tracker, and priority placement.</span>
+                </div>
+                <div class="rev-item">
+                  <strong>3. Hyperlocal Sponsored Pins:</strong>
+                  <span>Local food stalls, coaching institutes, and shops display geo-targeted promos along routes.</span>
+                </div>
+                <div class="rev-item">
+                  <strong>4. Smart City Transit Data Licensing:</strong>
+                  <span>Anonymized last-mile mobility feeds licensed to municipal transport authorities.</span>
+                </div>
+                <div class="rev-item">
+                  <strong>5. College & School Fleet Safe-Ride Portal:</strong>
+                  <span>Parent-facing safety dashboards with live tracking contracts.</span>
+                </div>
+              </div>
+            </div>
+            <div class="pitch-content-card">
+              <h3>Target Unit Economics (Pilot Corridor)</h3>
+              <table class="pitch-table">
+                <tbody>
+                  <tr>
+                    <td>Pilot Fleet Size</td>
+                    <td><strong>50 E-Rickshaws</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Daily Rides / Vehicle</td>
+                    <td><strong>18 Trips (6 passengers/trip)</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Daily Commuter Reach</td>
+                    <td><strong>5,400+ Daily Students & Commuters</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Hardware Capex</td>
+                    <td><strong>₹0 (Zero Hardware Cost)</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Breakeven Timeline</td>
+                    <td><strong>Month 3 of Corridor Launch</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Competitive Matrix -->
+        <div id="sec-competition" class="pitch-section hidden">
+          <div class="pitch-content-card full-width">
+            <h3>Competitive Differentiation Matrix</h3>
+            <table class="pitch-table full-table">
+              <thead>
+                <tr>
+                  <th>Feature / Dimension</th>
+                  <th>SARTHI</th>
+                  <th>Uber / Ola / Rapido</th>
+                  <th>Existing Offline System</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Core Operating Model</strong></td>
+                  <td><span class="badge-sarthi">Shared Transit Visibility Layer</span></td>
+                  <td>On-Demand Private Dispatch</td>
+                  <td>Offline Tribal Knowledge</td>
+                </tr>
+                <tr>
+                  <td><strong>Driver Hardware Cost</strong></td>
+                  <td><span class="badge-green">₹0 (Driver Smartphone)</span></td>
+                  <td>Requires Smartphone + App</td>
+                  <td>₹0</td>
+                </tr>
+                <tr>
+                  <td><strong>Driver Commission</strong></td>
+                  <td><span class="badge-green">0% Core Tracking</span></td>
+                  <td><span class="badge-red">20% to 25%</span></td>
+                  <td>0%</td>
+                </tr>
+                <tr>
+                  <td><strong>Live Seat Availability</strong></td>
+                  <td><span class="badge-sarthi">Yes (1-Tap Real-time)</span></td>
+                  <td>No (Exclusive booking)</td>
+                  <td>No (Flag-down guesswork)</td>
+                </tr>
+                <tr>
+                  <td><strong>Inclusion & Low-Data</strong></td>
+                  <td><span class="badge-sarthi">SMS & USSD Fallback</span></td>
+                  <td>Smartphone App Only</td>
+                  <td>N/A</td>
+                </tr>
+                <tr>
+                  <td><strong>Smart City Data Value</strong></td>
+                  <td><span class="badge-sarthi">Auto-Learned Corridors</span></td>
+                  <td>Proprietary Siloed Data</td>
+                  <td>Zero Data Recorded</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 6: Judge Pitch & Elevator Pitch -->
+        <div id="sec-judge" class="pitch-section hidden">
+          <div class="pitch-card-grid">
+            <div class="pitch-content-card highlight-card">
+              <h3>30-Second Elevator Pitch</h3>
+              <p class="pitch-quote">
+                “Every day, millions walk further than they need to and drivers roam longer than they should — because no one can see the shared rickshaw already near them. Sarthi is an intelligent shared-mobility layer that makes existing e-rickshaws live-trackable: where they are, how many seats are free, and when they’ll arrive. We’re not building new rides — we’re making the rides that already move India visible, predictable, and efficient.”
+              </p>
+            </div>
+            <div class="pitch-content-card">
+              <h3>Why SARTHI Wins Competitions & Grants</h3>
+              <ul class="win-list">
+                <li><i data-lucide="check"></i> <strong>Real, validated daily problem:</strong> Directly experienced by students & workers every morning.</li>
+                <li><i data-lucide="check"></i> <strong>Asset-light & scalable:</strong> Zero fleet capex, zero hardware installation.</li>
+                <li><i data-lucide="check"></i> <strong>Environmental Impact:</strong> Cuts idle battery drain & congestion in crowded towns.</li>
+                <li><i data-lucide="check"></i> <strong>Clear Pilot Execution:</strong> 2-week pilot roadmap ready for Delhi University North Campus corridor.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 5: ROCKETRIDE LOAD-BEARING AI PIPELINE CONSOLE (BUILDATHON SPECIAL) -->
+    <!-- ========================================================================= -->
+    <section id="view-rocketride" class="view-panel">
+      <div class="rocketride-container">
+        
+        <!-- Top Meta-Harness Banner -->
+        <div class="rr-banner">
+          <div class="rr-banner-left">
+            <span class="rr-badge-pill">ROCKETRIDE AI META-HARNESS ENGINE</span>
+            <h2>Multi-Agent Transit Telemetry & Safety DAG</h2>
+            <p>Load-bearing asynchronous pipeline processing mixed-media telemetry, computer vision stop density, vernacular voice notes, and human-in-the-loop safety gating.</p>
+          </div>
+          <div class="rr-banner-right">
+            <div class="rr-stat-chip">
+              <span class="lbl">Unit Cost / Run</span>
+              <strong class="val" id="rr-metric-cost">$0.0012</strong>
+            </div>
+            <div class="rr-stat-chip">
+              <span class="lbl">Total Pipeline Runs</span>
+              <strong class="val" id="rr-metric-runs">42</strong>
+            </div>
+            <div class="rr-stat-chip">
+              <span class="lbl">Batch Throughput</span>
+              <strong class="val" id="rr-batch-throughput">185.4 rec/s</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Visual Multi-Agent DAG -->
+        <div class="rr-card rr-dag-card">
+          <div class="rr-card-header">
+            <div class="rr-title">
+              <i data-lucide="git-merge"></i>
+              <h3>Active Multi-Agent Pipeline Graph (DAG)</h3>
+            </div>
+            <span class="badge-live-feed">RocketRide v0.4.2 Connected</span>
+          </div>
+
+          <div class="rr-dag-graph">
+            <!-- Node 1 -->
+            <div class="rr-dag-node node-active" id="node-ingest">
+              <div class="node-icon"><i data-lucide="database"></i></div>
+              <strong>1. Stream Ingest</strong>
+              <span>Batch Telemetry + Audio + Photo</span>
+              <div class="node-badge">Source</div>
+            </div>
+
+            <div class="dag-arrow">➔</div>
+
+            <!-- Node 2 -->
+            <div class="rr-dag-node node-idle" id="node-voice">
+              <div class="node-icon"><i data-lucide="mic"></i></div>
+              <strong>2. Vernacular Voice Agent</strong>
+              <span>Whisper v3 + GPT-4o-mini (Hindi NLP)</span>
+              <div class="node-badge">Specialist AI</div>
+            </div>
+
+            <div class="dag-arrow">➔</div>
+
+            <!-- Node 3 -->
+            <div class="rr-dag-node node-idle" id="node-vision">
+              <div class="node-icon"><i data-lucide="camera"></i></div>
+              <strong>3. Vision Density Agent</strong>
+              <span>Claude 3.5 Sonnet Vision (Queue Density)</span>
+              <div class="node-badge">Vision AI</div>
+            </div>
+
+            <div class="dag-arrow">➔</div>
+
+            <!-- Node 4 -->
+            <div class="rr-dag-node node-idle" id="node-auditor">
+              <div class="node-icon"><i data-lucide="shield-check"></i></div>
+              <strong>4. Cross-Checking Auditor</strong>
+              <span>Fraud & Anomaly Detector Agent</span>
+              <div class="node-badge">Auditor AI</div>
+            </div>
+
+            <div class="dag-arrow">➔</div>
+
+            <!-- Node 5 -->
+            <div class="rr-dag-node node-idle" id="node-hitl">
+              <div class="node-icon"><i data-lucide="user-check"></i></div>
+              <strong>5. Human Safety Gate</strong>
+              <span>Confidence Line (85% Threshold)</span>
+              <div class="node-badge">HITL Gate</div>
+            </div>
+
+            <div class="dag-arrow">➔</div>
+
+            <!-- Node 6 -->
+            <div class="rr-dag-node node-idle" id="node-action">
+              <div class="node-icon"><i data-lucide="send"></i></div>
+              <strong>6. Real-World Action</strong>
+              <span>PostGIS Upsert + Twilio SMS + Push</span>
+              <div class="node-badge">Webhook</div>
+            </div>
+          </div>
+
+          <!-- Confidence Meter Line -->
+          <div class="rr-confidence-section">
+            <div class="conf-info">
+              <span>Pipeline Confidence Line:</span>
+              <strong id="rr-confidence-label">94% Confidence (Auto-Approve Threshold: &ge; 85%)</strong>
+            </div>
+            <div class="conf-track">
+              <div class="conf-bar" id="rr-confidence-bar" style="width: 94%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Row: Mixed-Media Testing Playground & High-Volume Batch Processor -->
+        <div class="rr-grid-2col">
+          
+          <!-- Mixed-Media Playground Console -->
+          <div class="rr-card">
+            <div class="rr-card-header">
+              <div class="rr-title">
+                <i data-lucide="sliders"></i>
+                <h3>Mixed-Media Multi-Modal Input Playground</h3>
+              </div>
+              <span class="pill-gold">Live Test Runner</span>
+            </div>
+
+            <div class="rr-input-form">
+              <div class="form-group">
+                <label>1. Driver Voice Note (Hindi / Dialect Speech)</label>
+                <input type="text" id="rr-input-voice" value="कॉलेज मोड़ पर 3 सवारी बैठ गई, 3 सीट खाली है" class="rr-input">
+                <span class="field-hint">Try Hindi, Hinglish, or distress keyword "मदद चाहिए"</span>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>2. Telemetry Speed (km/h)</label>
+                  <input type="number" id="rr-input-speed" value="16.5" class="rr-input">
+                </div>
+                <div class="form-group">
+                  <label>3. Reported Seats Free</label>
+                  <input type="number" id="rr-input-seats" value="4" min="0" max="6" class="rr-input">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>4. Stop CCTV Camera Snapshot</label>
+                <div class="cctv-preview-box">
+                  <img src="assets/sarthi_hero.jpg" alt="CCTV Stop Frame" class="cctv-img">
+                  <div class="cctv-tag">CCTV-DU-METRO-GATE2 • Vision Queue Analysis Active</div>
+                </div>
+              </div>
+
+              <div class="rr-actions-row">
+                <button class="btn-primary-indigo" id="btn-rr-run-single">
+                  <i data-lucide="play"></i> ⚡ Run Multi-Agent Pipeline
+                </button>
+                <button class="btn-sos-danger" id="btn-rr-trigger-anomaly">
+                  <i data-lucide="shield-alert"></i> 🚨 Trigger Anomaly & Test Human Gate
+                </button>
+              </div>
+
+              <div class="rr-action-result-box">
+                <strong>Last Execution Output:</strong>
+                <p id="rr-metric-action">Auto-approved. Telemetry upserted to PostGIS and broadcasted to passenger radar.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- High-Volume Batch Processing & Unit Economics Hub -->
+          <div class="rr-card">
+            <div class="rr-card-header">
+              <div class="rr-title">
+                <i data-lucide="layers"></i>
+                <h3>High-Volume Batch Benchmarking (RocketRide Engine)</h3>
+              </div>
+              <span class="badge-green">Stress-Tested</span>
+            </div>
+
+            <p class="card-desc">Simulate batch processing over hundreds of simultaneous driver telemetry pings and passenger audio clips.</p>
+
+            <div class="rr-batch-btn-group">
+              <button class="btn-pill-amber" id="btn-batch-100"><i data-lucide="play-circle"></i> Run Batch: 100 Trips</button>
+              <button class="btn-pill-amber" id="btn-batch-500"><i data-lucide="play-circle"></i> Run Batch: 500 Trips</button>
+              <button class="btn-pill-amber" id="btn-batch-1000"><i data-lucide="play-circle"></i> Run Batch: 1,000 Trips</button>
+            </div>
+
+            <div class="batch-progress-wrapper">
+              <div class="batch-progress-bar-bg">
+                <div class="batch-progress-bar-fill" id="rr-batch-progress-bar" style="width: 0%;"></div>
+              </div>
+              <span class="batch-status-text" id="rr-batch-status">Ready for batch execution (0 errors).</span>
+            </div>
+
+            <!-- Unit Economics Table -->
+            <div class="rr-cost-table-box">
+              <h4>Predictable Unit Economics Sheet</h4>
+              <table class="pitch-table">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Model / Provider</th>
+                    <th>Cost per 100 Runs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Vernacular Audio Parse</td>
+                    <td>Whisper v3 + GPT-4o-mini</td>
+                    <td><strong>$0.040</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Vision Stop Density</td>
+                    <td>Claude 3.5 Sonnet Vision</td>
+                    <td><strong>$0.080</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Cross-Checking Auditor</td>
+                    <td>GPT-4o (Structured JSON)</td>
+                    <td><strong>$0.020</strong></td>
+                  </tr>
+                  <tr style="background:#FFF9F0; font-weight:bold;">
+                    <td>Total Pipeline Run</td>
+                    <td>RocketRide Multi-Agent DAG</td>
+                    <td><span class="badge-green">$0.140 / 100 trips</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- HUMAN-IN-THE-LOOP (HITL) OPERATOR SAFETY OVERRIDE MODAL                  -->
+  <!-- ========================================================================= -->
+  <div id="modal-rr-hitl" class="modal-backdrop hidden">
+    <div class="hitl-modal-box">
+      <div class="hitl-modal-header">
+        <div class="hitl-title-box">
+          <span class="pulse-red"></span>
+          <h3>Human Safety Gate: Supervisor Review Required</h3>
+        </div>
+        <span class="hitl-badge-warn">Confidence &lt; 85% Threshold</span>
+      </div>
+
+      <div class="hitl-modal-body">
+        <div class="hitl-alert-banner">
+          <i data-lucide="alert-triangle"></i>
+          <div>
+            <strong>Pipeline Halted at Gate 5:</strong>
+            <p id="hitl-reason-text">Distress keyword or route anomaly detected.</p>
+          </div>
+        </div>
+
+        <div class="hitl-details-grid">
+          <div class="h-item">
+            <span>Vehicle ID:</span>
+            <strong id="hitl-vehicle-id">DL-1ER-4921</strong>
+          </div>
+          <div class="h-item">
+            <span>Driver Name:</span>
+            <strong id="hitl-driver-name">Ramesh Kumar</strong>
+          </div>
+          <div class="h-item">
+            <span>Agent Confidence:</span>
+            <strong id="hitl-confidence-val" style="color:#DC2626;">58%</strong>
+          </div>
+          <div class="h-item full">
+            <span>Transcribed Voice Note:</span>
+            <blockquote id="hitl-voice-transcript">"मदद चाहिए, कॉलेज मोड़ पर रास्ता बंद है और गाड़ी पंचर है"</blockquote>
+          </div>
+        </div>
+
+        <div class="hitl-actions-footer">
+          <button class="btn-action-teal" id="btn-hitl-approve"><i data-lucide="check"></i> Approve & Resume Fleet Stream</button>
+          <button class="btn-subtle-amber" id="btn-hitl-override"><i data-lucide="edit-3"></i> Manual Override</button>
+          <button class="btn-sos-danger" id="btn-hitl-escalate"><i data-lucide="phone-forwarded"></i> Escalate to Police Patrol</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- INTERACTIVE USSD / SMS FEATURE PHONE MODAL                                -->
+  <!-- ========================================================================= -->
+  <div id="modal-ussd" class="modal-backdrop hidden">
+    <div class="ussd-phone-mockup">
+      <div class="ussd-screen">
+        <div class="ussd-header">
+          <span>AIRTEL 4G</span>
+          <span>100% 🔋</span>
+        </div>
+        <div class="ussd-dialer" id="ussd-dialer-view">
+          <div class="ussd-code-display">*99*77#</div>
+          <p class="ussd-hint">Sarthi USSD Gateway (No Internet Required)</p>
+          <button class="btn-ussd-call" id="btn-ussd-dial"><i data-lucide="phone"></i> Dial Code</button>
+        </div>
+        <div class="ussd-dialog hidden" id="ussd-dialog-view">
+          <div class="ussd-text" id="ussd-response-text">
+            <strong>SARTHI RADAR: DU Metro</strong><br>
+            1. Rickshaw #1: 4 seats (ETA 2m)<br>
+            2. Rickshaw #2: 1 seat (ETA 5m)<br>
+            Reply with [1] to hold seat or [9] for SOS.
+          </div>
+          <input type="text" class="ussd-input" placeholder="Type 1 or 9..." id="ussd-user-reply">
+          <div class="ussd-actions">
+            <button class="ussd-btn" id="btn-ussd-send">Send</button>
+            <button class="ussd-btn cancel" id="btn-ussd-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-close-modal" id="btn-close-ussd"><i data-lucide="x"></i> Close Feature Phone Simulator</button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION POPUP -->
+  <div id="toast-notification" class="toast-notification hidden">
+    <div class="toast-icon" id="toast-icon">🛺</div>
+    <div class="toast-body">
+      <div class="toast-title" id="toast-title">Notification</div>
+      <div class="toast-desc" id="toast-desc">Message details here...</div>
+    </div>
+  </div>
+
+  <!-- AUDIO ELEMENTS FOR SOUND EFFECTS & VOICE CUES -->
+  <audio id="audio-beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+  <audio id="audio-success" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Custom App Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/passenger.js"></script>
+  <script src="js/driver.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/rocketride_pipeline.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Initialize Lucide icons on load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

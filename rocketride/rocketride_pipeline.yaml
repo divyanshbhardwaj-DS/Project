@@ -1,0 +1,131 @@
+# ==============================================================================
+# SARTHI — RocketRide Load-Bearing AI Pipeline Definition
+# Multi-Agent Distributed Transit Telemetry & Safety Anomaly Engine
+# ==============================================================================
+version: "1.0"
+name: sarthi-transit-intelligence-pipeline
+description: "High-volume, multi-agent pipeline for digitizing informal transit telemetry, mixed-media audio/visual validation, and human-in-the-loop safety dispatch."
+
+environment:
+  python_version: "3.10"
+  dependencies:
+    - rocketride>=0.4.2
+    - pydantic>=2.0
+    - requests>=2.31.0
+
+pipeline:
+  # ----------------------------------------------------------------------------
+  # Stage 1: High-Volume Batch Ingestion
+  # ----------------------------------------------------------------------------
+  - id: batch_telemetry_ingest
+    type: source.batch
+    name: "Telemetry & Multi-Modal Stream Ingest"
+    config:
+      batch_size: 250
+      max_concurrency: 8
+      timeout_seconds: 15
+      retry_policy:
+        max_attempts: 3
+        backoff_factor: 1.5
+      schema:
+        vehicle_id: str
+        driver_id: str
+        gps_lat: float
+        gps_lng: float
+        speed_kmh: float
+        reported_seats_free: int
+        audio_clip_base64: optional[str]
+        stop_cctv_frame_url: optional[str]
+        timestamp: str
+
+  # ----------------------------------------------------------------------------
+  # Stage 2: Specialist Agent 1 - Vernacular Audio & Dialect Transcriber
+  # ----------------------------------------------------------------------------
+  - id: vernacular_voice_agent
+    type: agent.llm
+    name: "Vernacular Voice Intent Specialist"
+    model: "whisper-large-v3 + gpt-4o-mini"
+    depends_on: [batch_telemetry_ingest]
+    condition: "record.audio_clip_base64 is not null"
+    prompt: |
+      You are an expert Indian Vernacular Regional Speech & Transit Intent Parser.
+      Input: Raw audio / phonetic Hindi, Bhojpuri, Punjabi, or Hinglish driver voice notes.
+      Task:
+      1. Transcribe the driver's regional statement to English and clean Hindi.
+      2. Extract structured transit state:
+         - seat_update (number of seats added/dropped)
+         - congestion_report (location + passenger crowd estimate)
+         - distress_signal (True/False)
+      Output strict JSON.
+    schema_validation:
+      required: [transcription, extracted_seats_free, distress_detected, confidence]
+
+  # ----------------------------------------------------------------------------
+  # Stage 3: Specialist Agent 2 - Vision Crowd & Queue Density Estimator
+  # ----------------------------------------------------------------------------
+  - id: vision_density_agent
+    type: agent.vision
+    name: "Computer Vision Stop Density Specialist"
+    model: "claude-3-5-sonnet-vision"
+    depends_on: [batch_telemetry_ingest]
+    condition: "record.stop_cctv_frame_url is not null"
+    prompt: |
+      Analyze this transit stop/college gate photo.
+      Task:
+      1. Count visible waiting commuters / student queue length.
+      2. Estimate boarding demand urgency (LOW, MODERATE, HIGH, SURGE).
+      3. Flag safety risks (e.g., street blocking, overcrowding).
+      Output structured JSON with confidence score (0.0 to 1.0).
+
+  # ----------------------------------------------------------------------------
+  # Stage 4: Specialist Agent 3 - Telemetry & Fraud Anomaly Checker
+  # ----------------------------------------------------------------------------
+  - id: telemetry_anomaly_agent
+    type: agent.llm
+    name: "Telemetry Cross-Verification & Fraud Auditor"
+    model: "gpt-4o"
+    depends_on: [vernacular_voice_agent, vision_density_agent]
+    prompt: |
+      Cross-audit the driver's reported GPS speed, reported seat status, against:
+      - Historical learned corridor route
+      - Voice note transcription
+      - Computer vision crowd estimate
+      Detect anomalies:
+      - False seat broadcast (driver reported 6 free, but camera shows vehicle full)
+      - Route deviation / speed anomaly
+      - Unmet high demand hotspot
+      Compute overall pipeline confidence score (0-100%).
+
+  # ----------------------------------------------------------------------------
+  # Stage 5: Human-in-the-Loop (HITL) Safety & Confidence Gate
+  # ----------------------------------------------------------------------------
+  - id: human_safety_gate
+    type: gate.human_in_the_loop
+    name: "Transit Supervisor Approval Gate"
+    depends_on: [telemetry_anomaly_agent]
+    rules:
+      - condition: "confidence >= 0.85 and not distress_detected and not route_anomaly"
+        action: auto_approve
+      - condition: "confidence < 0.85 or distress_detected == True or route_anomaly == True"
+        action: require_human_review
+        escalation:
+          timeout_minutes: 5
+          default_fallback: hold_and_notify_police
+          reviewer_role: "SmartCity_Transit_Supervisor"
+
+  # ----------------------------------------------------------------------------
+  # Stage 6: Real-World Action & Dispatch Webhooks
+  # ----------------------------------------------------------------------------
+  - id: dispatch_realworld_actions
+    type: action.multi_target
+    name: "Multi-Channel Dispatch & Telemetry Sync"
+    depends_on: [human_safety_gate]
+    targets:
+      - target: "database.postgres_postgis"
+        action: "upsert_fleet_telemetry"
+      - target: "redis.pubsub"
+        channel: "sarthi:passenger:radar"
+      - target: "sms.twilio_emergency"
+        condition: "distress_detected == True"
+      - target: "driver.push_nudge"
+        payload: "Recommended loop to Metro Gate 2. 18 waiting passengers confirmed."
